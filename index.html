@@ -1,0 +1,96 @@
+row.appendChild(L);
+        row.appendChild(T);
+
+        row.addEventListener('click', () => {
+          if (answered) return; // no change after submit
+          document.querySelectorAll('.option').forEach(n => n.classList.remove('selected'));
+          row.classList.add('selected');
+          selectedIndex = i;
+          nextBtn.disabled = false;
+        });
+
+        optsEl.appendChild(row);
+      });
+    }
+
+    nextBtn.addEventListener('click', () => {
+      // If not submitted yet -> evaluate
+      if (!answered) {
+        if (selectedIndex === null) return;
+        answered = true;
+        const correct = questions[idx].a;
+        const optionEls = Array.from(document.querySelectorAll('.option'));
+
+        optionEls.forEach(o => {
+          const i = +o.dataset.i;
+          o.style.pointerEvents = 'none';
+          if (i === correct) o.classList.add('correct');
+          if (i === selectedIndex && i !== correct) o.classList.add('wrong');
+        });
+
+        if (selectedIndex === correct) {
+          score++;
+          msgEl.innerHTML = '<span style="color:var(--green);font-weight:700">✔ Correct</span>';
+        } else {
+          msgEl.innerHTML = '<span style="color:var(--red);font-weight:700">✖ Incorrect</span>';
+        }
+
+        nextBtn.textContent = (idx === questions.length - 1) ? 'See Results' : 'Next';
+        nextBtn.disabled = false;
+        return;
+      }
+
+      // If already answered -> next or results
+      idx++;
+      if (idx < questions.length) {
+        loadQuestion();
+      } else {
+        showResults();
+      }
+    });
+
+    function showResults(){
+      const app = document.getElementById('app');
+      const percent = Math.round((score / questions.length) * 100);
+      app.innerHTML = 
+        <div class="center" style="padding:24px">
+          <h2>Your Score</h2>
+          <div class="score">${score} / ${questions.length}</div>
+          <p class="small">${percent}% correct</p>
+          <div style="margin-top:18px">
+            <button id="retry">Retry Quiz</button>
+          </div>
+        </div>
+      ;
+      document.getElementById('retry').addEventListener('click', () => {
+        idx = 0; score = 0; selectedIndex = null; answered = false;
+        location.reload();
+      });
+    }
+
+    // keyboard support: arrows + enter
+    document.addEventListener('keydown', (e) => {
+      const opts = Array.from(document.querySelectorAll('.option'));
+      if (!opts.length) return;
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        let next = (selectedIndex === null) ? 0 : Math.min(selectedIndex + 1, opts.length - 1);
+        opts.forEach(n => n.classList.remove('selected'));
+        opts[next].classList.add('selected');
+        selectedIndex = next;
+        nextBtn.disabled = false;
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        let prev = (selectedIndex === null) ? 0 : Math.max(selectedIndex - 1, 0);
+        opts.forEach(n => n.classList.remove('selected'));
+        opts[prev].classList.add('selected');
+        selectedIndex = prev;
+        nextBtn.disabled = false;
+      } else if (e.key === 'Enter') {
+        if (!nextBtn.disabled) nextBtn.click();
+      }
+    });
+
+    // start
+    loadQuestion();
+  </script>
+</body>
+</html>
